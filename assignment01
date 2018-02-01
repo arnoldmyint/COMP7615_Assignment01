@@ -1,0 +1,289 @@
+; ------------------------------------------------------------------
+; File name 	: COMP7615_Lab01.asm
+;
+; Description	: COMP7615_Assignment01
+;
+; Author		: Arnold Myint (A00930841)
+;
+; Instructions : nasm -f elf -g assignment01.asm
+;               ld -m elf_i386 -o assignment01 assignment01.o
+;------------------------------------------------------------------
+section .data
+
+    ErrorMsg db "Not a valid input. (0 < number < 65535)", 0xa
+    ErrLen equ $-ErrorMsg
+
+    Menu db "Please select a case (0-3):", 0xa
+    MenuLen equ $-Menu
+
+    InputNum db "Please enter a number: ", 0xa ; Ask user input
+    StrLen equ $-InputNum
+
+    ZeroMsg db "Case0: "
+    ZeroLen equ $-ZeroMsg
+
+    OneMsg db "Case1: "
+    OneLen equ $-OneMsg
+
+    TwoMsg db "Case2: "
+    TwoLen equ $-TwoMsg
+
+    ThreeMsg db "Case3: "
+    ThreeLen equ $-ThreeMsg
+
+section .bss
+    nvalue resb 5
+    val1 resb 5
+    val2 resb 5
+    val3 resb 5
+    num resb 10
+
+section .text
+extern printf
+
+global _start
+_start:
+   nop
+   
+; Prompt for user
+
+   mov eax, 4
+   mov ebx, 1
+   mov ecx, Menu
+   mov edx, MenuLen
+   int 80h
+
+   mov eax, 3
+   mov ebx, 0
+   mov ecx, nvalue
+   mov edx, 5
+   int 80h
+
+   mov edi, nvalue
+   call atoi
+   mov [nvalue], eax
+
+   mov eax, [nvalue]
+   add eax, 1
+   mov [nvalue], eax
+
+   cmp eax, 3
+   jg _exit
+
+   mov eax, 4
+   mov ebx, 1
+   mov ecx, InputNum
+   mov edx, StrLen
+   int 80h
+
+   mov eax, 3
+   mov ebx, 0
+   mov ecx, val1
+   mov edx, 5
+   int 80h
+
+   mov edi, val1
+   call atoi
+   mov [val1], eax
+   mov edx, [val1]
+   call validate
+
+   mov eax, 4
+   mov ebx, 1
+   mov ecx, InputNum
+   mov edx, StrLen
+   int 80h
+
+   mov eax, 3
+   mov ebx, 0
+   mov ecx, val2
+   mov edx, 5
+   int 80h
+
+   mov edi, val2
+   call atoi
+   mov [val2], eax
+   mov edx, [val2]
+   call validate
+
+   mov eax, 4
+   mov ebx, 1
+   mov ecx, InputNum
+   mov edx, StrLen
+   int 80h
+
+   mov eax, 3
+   mov ebx, 0
+   mov ecx, val3
+   mov edx, 5
+   int 80h
+
+   mov edi, val3
+   call atoi
+   mov [val3], eax
+   mov edx, [val3]
+   call validate
+
+   mov eax, [nvalue]
+   cmp eax, 0
+   je case0
+   cmp eax, 1
+   je case1
+   cmp eax, 2
+   je case2
+   cmp eax, 3
+   je case3
+
+_exit:
+   mov eax, 1   ;exit
+   int 80h
+
+_error:
+   mov eax, 4
+   mov ebx, 1
+   mov ecx, ErrorMsg
+   mov edx, ErrLen
+   int 80h
+   jmp _exit
+
+validate:
+   cmp edx, 0
+   jl _error
+   cmp edx, 65535
+   jg _error
+   ret
+
+case0:
+   mov eax, [val1]
+   mov ebx, [val2]
+   mul ebx
+   mov [num], eax
+
+   mov eax, 4
+   mov ebx, 1
+   mov ecx, ZeroMsg
+   mov edx, ZeroLen
+   int 80h
+
+   mov eax, [num]
+   call itoa
+
+   jmp _exit
+
+case1:
+   mov eax, [val2]
+   mov ebx, [val3]
+   mul ebx
+   mov [num], eax
+
+   mov eax, 4
+   mov ebx, 1
+   mov ecx, OneMsg
+   mov edx, OneLen
+   int 80h
+
+   mov eax, [num]
+   call itoa
+
+   jmp _exit
+
+case2:
+   mov eax, [val3]
+   mov ebx, [val1]
+   sub eax, ebx
+   mov [num], eax
+
+   mov eax, 4
+   mov ebx, 1
+   mov ecx, TwoMsg
+   mov edx, TwoLen
+   int 80h
+
+   mov eax, [num]
+   call itoa
+
+   jmp _exit
+
+case3:
+   mov eax, [val1]
+   mov ebx, [val3]
+   sub eax, ebx
+   mov [num], eax
+
+   mov eax, 4
+   mov ebx, 1
+   mov ecx, ThreeMsg
+   mov edx, ThreeLen
+   int 80h
+
+   mov eax, [num]
+   call itoa
+
+   jmp _exit
+
+atoi:
+   push ebx
+   mov ebx, 10
+   xor eax, eax
+   xor ecx, ecx
+
+.top:
+   mov cl, byte [edi]
+   add edi, 1
+   cmp cl, 0
+   je .done
+   cmp cl, '0'
+   jb .invalid
+   cmp cl, '9'
+   ja .invalid
+   sub cl, '0'
+   mul ebx
+   add eax, ecx
+   jmp .top
+
+.invalid:
+.done:
+   pop ebx
+   ret
+
+itoa:
+   push ebx
+   push ecx
+   push edx
+   mov ebx, 10
+   xor ecx, ecx
+
+.divide:
+   xor edx, edx
+   div ebx
+   push edx
+   inc ecx
+   cmp eax, 0
+   jne .divide
+
+.nextdigit:
+   pop eax
+   add eax, '0'
+   push ecx
+   mov edx, 1
+   push eax
+   mov ecx, esp
+   mov ebx, 1
+   mov eax, 4
+   int 80h
+
+   pop eax
+   pop ecx
+   dec ecx
+   cmp ecx, 0
+   jg .nextdigit
+
+   mov eax, 1
+   mov ebx, 0
+   int 80h
+
+   pop edx
+   pop ecx
+   pop ebx
+
+   ret
