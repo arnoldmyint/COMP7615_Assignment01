@@ -261,7 +261,7 @@ itoa:
    cmp eax, 0
    jne .divide
 
-.nextdigit:
+.plusone:
    pop eax
    add eax, '0'
    push ecx
@@ -276,7 +276,7 @@ itoa:
    pop ecx
    dec ecx
    cmp ecx, 0
-   jg .nextdigit
+   jg .plusone
 
    mov eax, 1
    mov ebx, 0
